@@ -1,0 +1,535 @@
+% !TEX TS-program = XeLaTeX
+\documentclass{article}
+
+\usepackage{tikz}
+\usepackage{nopageno}
+
+
+\usepackage{geometry}
+
+
+\usepackage{fontspec}
+
+\setmainfont{Euphemia UCAS}
+
+\begin{document}
+
+
+
+\tikzset{cutout/.style={thick,color=white}}
+\tikzset{bus/.style={thick,color=black}}
+
+\definecolor{boxbg}{RGB}{78,151,209}
+\definecolor{darkboxbg}{RGB}{0,0,0}
+
+\definecolor{shadow}{RGB}{200,200,200}
+
+\newcommand{\fontscale}{.08*\width}
+
+\newcommand{\aspect}{0.77} %Mr Matt's is .61
+\newcommand{\width}{21}
+\newcommand{\height}{\width/\aspect}
+
+\newcommand{\pad}{.046*\width}
+\newcommand{\topboxheight}{.25*\width} % height of boxes across top
+\newcommand{\counterboxwidth}{.5*\width}
+
+\newcommand{\shadowpad}{.15*\pad}
+
+\newcommand{\graylinewidth}{\shadowpad}
+
+\newcommand{\inputawidth}{.14*\width}
+\newcommand{\inputbwidth}{.22*\width}
+
+\newcommand{\inputaheight}{.09*\width} % height of white box inside Input A
+
+\newcommand{\leftpanelwidth}{.41*\width}
+\newcommand{\leftpanelheight}{\height-2*\pad - \topboxheight} % from top of compare unit to bottom
+
+\newcommand{\rightpanelwidth}{\width-3*\pad-\leftpanelwidth}
+\newcommand{\rightpanelheight}{\leftpanelheight-3*\pad} % from top of compare unit to bottom
+
+
+\newcommand{\mainpanelwidth}{\width-2*\pad}
+\newcommand{\mainpanelheight}{\rightpanelheight}
+
+\newcommand{\counterstripwidth}{.08*\width}
+\newcommand{\counterstripwindowheight}{.05*\width}
+\newcommand{\counterstripypad}{.11*\width}
+\newcommand{\counterstripxpad}{.02*\width}
+
+\newcommand{\counterstriplength}{17*\counterstripwindowheight}
+
+\newcommand{\comparestriplength}{.8*\counterstriplength}
+
+\newcommand{\inputstripwidth}{.15*\width}
+\newcommand{\inputstripbgheight}{.13*\width}
+
+\newcommand{\cutoutleg}{.12*\pad}
+\newcommand{\jumpstripwidth}{.05*\width}
+\newcommand{\jumpgap}{.8*\pad} %between jump strips
+\newcommand{\jumppad}{.5*\leftpanelwidth - \jumpgap - 1.5*\jumpstripwidth} %from wall to first jumpstrip
+\newcommand{\jumpstriplength}{.5*\leftpanelheight}
+
+\newcommand{\buttonpad}{.5*\leftpanelwidth-\buttonwidth-.5*\buttongap}
+\newcommand{\buttongap}{.8*\pad}
+\newcommand{\buttonwidth}{.25*\leftpanelwidth}
+\newcommand{\buttonheight}{2*\pad}
+\newcommand{\buttonvpad}{.5*\pad}
+
+\newcommand{\busvpad}{.15*\pad}
+\newcommand{\busgap}{.43*\pad}
+\newcommand{\buheight}{\height-\pad-\topboxheight-\busvpad-.5*\busgap}
+\newcommand{\busheight}{\height-\pad-\topboxheight-\busvpad-2*\busgap}
+\newcommand{\bussheight}{\height-\pad-\topboxheight-\busvpad-3*\busgap}
+\newcommand{\busssheight}{\height-\pad-\topboxheight-\busvpad-4*\busgap}
+
+\newcommand{\buscircrad}{.15*\pad}
+
+\newcommand{\stripdelta}{.1*\jumpstripwidth}
+
+\newcommand{\buscirc}[2]{
+\draw[fill=black] (#1,#2) circle (\buscircrad);
+}
+
+% bus triangles, given point is center
+\newcommand{\busuptriangle}[2]{
+\draw[fill=black,shift={(#1,#2-.5*\buscircrad)},scale=1.5] (-30:\buscircrad) -- (90:\buscircrad) -- (210:\buscircrad);
+}
+\newcommand{\busdowntriangle}[2]{
+\begin{scope}[rotate around={180:(#1,#2)}]
+\busuptriangle{#1}{#2}
+\end{scope}
+}
+\newcommand{\buslefttriangle}[2]{
+\begin{scope}[rotate around={90:(#1,#2)}]
+\busuptriangle{#1}{#2}
+\end{scope}
+}
+\newcommand{\busrighttriangle}[2]{
+\begin{scope}[rotate around={-90:(#1,#2)}]
+\busuptriangle{#1}{#2}
+\end{scope}
+}
+
+% use like \cutouts{x}{y}{w}{h}, makes cutouts like the top & bottom sides of a rectangle with corners:
+%  (x,y) & (x+w,y+h)
+\newcommand{\cutouts}[4]{
+\draw[cutout, shift={({#1}, {#2})}] (0,-\cutoutleg) -- (0,0) -- ({#3},0) -- ({#3}, -\cutoutleg); % bottom
+\draw[cutout, shift={({#1}, {#2+#4})}] (0,\cutoutleg) -- (0,0) -- ({#3},0) -- ({#3}, \cutoutleg); % top
+}
+
+% this one has legs facing inwards
+\newcommand{\incutouts}[4]{
+\draw[cutout, shift={(#1, #2)}] (0,\cutoutleg) -- (0,0) -- (#3,0) -- (#3, \cutoutleg); % bottom
+\draw[cutout, shift={(#1, #2+#4)}] (0,-\cutoutleg) -- (0,0) -- (#3,0) -- (#3, -\cutoutleg); % top
+}
+
+% a shadowed box with round corners
+% first arg is lower-left corner, then width, then height (no shadow)
+\newcommand{\roundshadowbox}[3]{%
+\fill[shift={#1}, fill=shadow, rounded corners] (0,-\shadowpad) rectangle (#2+\shadowpad, #3);
+\draw[shift={#1}, fill=boxbg, rounded corners] (0,0) rectangle (#2, #3);
+
+}
+
+% makes the black box with cutouts for Output, Registers, Input B
+% params are (x,y) of lower-left corner
+\newcommand{\bwbox}[2]{
+\draw[rounded corners, fill=darkboxbg, shift={({#1},{#2})}] (0,0) rectangle (\inputbwidth-.5*\pad,\inputstripbgheight);
+
+\cutouts{#1+.25*\pad}
+  {#2+\pad}
+  {\inputbwidth-\pad}
+  {\counterstripwindowheight}
+}
+
+
+\newpage
+
+ \newgeometry{
+ letterpaper,
+total={8.5in,11in},
+left=.1in,
+% left=-.7in ,
+top=.5 in
+}
+
+% left panel
+\begin{tikzpicture}
+
+% outer box
+%\draw (0,0) rectangle (\width,\height);
+
+% big weird-shaped area on left
+%shadow
+\fill[fill=shadow,shift={(\pad,\pad)}] (0,0) -- (\shadowpad,-\shadowpad) -- (\leftpanelwidth+\shadowpad,-\shadowpad) -- (\leftpanelwidth+\shadowpad,\leftpanelheight+\pad-\shadowpad) to[rounded corners] (\counterboxwidth+\shadowpad,\leftpanelheight+\pad-\shadowpad) to[rounded corners] (\counterboxwidth+\shadowpad,\leftpanelheight+\topboxheight) to[rounded corners] (0,\leftpanelheight+\topboxheight) to[rounded corners] (0,0);
+%blue
+\draw[fill=boxbg,shift={(\pad,\pad)}] (0,0) -- (\leftpanelwidth,0) -- (\leftpanelwidth,\leftpanelheight+\pad) to[rounded corners] (\counterboxwidth,\leftpanelheight+\pad) to[rounded corners] (\counterboxwidth, \leftpanelheight+\topboxheight) to[rounded corners] (0,\leftpanelheight+\topboxheight) -- (0,0);
+
+
+% PROGRAM STEP INDICATOR
+% text
+\node[align=center,scale=\fontscale] () at (\pad+\counterstripxpad + \counterstripwidth + .5*\counterstripxpad, \height-\pad-.5*\counterstripypad) {Program Step\\Indicator};
+
+\node[align=center,scale=.7*\fontscale] () at (\pad+\counterstripxpad + .5*\counterstripwidth, \height-\pad-\counterstripypad-1.3*\counterstripwindowheight) {tens};
+\node[align=center,scale=.7*\fontscale] () at (\pad+\counterstripxpad + 1.5*\counterstripwidth + \counterstripxpad, \height-\pad-\counterstripypad-1.3*\counterstripwindowheight) {ones};
+
+% cutouts
+\cutouts{\pad+\counterstripxpad}{\height-\pad-\counterstripypad-\counterstripwindowheight}{\counterstripwidth}{\counterstripwindowheight}
+\cutouts{\pad+\counterstripxpad+\counterstripwidth+\counterstripxpad}{\height-\pad-\counterstripypad-\counterstripwindowheight}{\counterstripwidth}{\counterstripwindowheight}
+
+% index counter text
+\node[align=center,scale=\fontscale] () at (\pad+\counterboxwidth-\counterstripxpad-\counterstripwidth-.5*\counterstripxpad, \height-\pad-.5*\counterstripypad) {Index Counter};
+
+\node[align=center,scale=.7*\fontscale] () at (\pad+\counterboxwidth-\counterstripxpad-1.5*\counterstripwidth-\counterstripxpad, \height-\pad-\counterstripypad-1.3*\counterstripwindowheight) {tens};
+\node[align=center,scale=.7*\fontscale] () at (\pad+\counterboxwidth-.5*\counterstripwidth-\counterstripxpad, \height-\pad-\counterstripypad-1.3*\counterstripwindowheight) {ones};
+
+% index counter strip cutouts
+\cutouts{\pad+\counterboxwidth-\counterstripxpad-\counterstripwidth}{\height-\pad-\counterstripypad-\counterstripwindowheight}{\counterstripwidth}{\counterstripwindowheight}
+\cutouts{\pad+\counterboxwidth-2*\counterstripxpad-2*\counterstripwidth}{\height-\pad-\counterstripypad-\counterstripwindowheight}{\counterstripwidth}{\counterstripwindowheight}
+
+% gray dividing lines
+\newcommand{\graylinehorz}[1]{
+\draw[fill=shadow,shift={(\pad,{\pad+#1*(\leftpanelheight)})}] (0,-.5*\graylinewidth) rectangle (\leftpanelwidth,.5*\graylinewidth);
+}
+\graylinehorz{0.15}
+\graylinehorz{0.66}
+\graylinehorz{1}
+
+%vertical one
+\draw[fill=shadow,shift={(\pad+.5*\counterboxwidth,\height-\pad)}] (-.5*\graylinewidth,0) rectangle (.5*\graylinewidth,-\topboxheight+.5*\graylinewidth);
+
+% COMPARE UNIT
+% text
+\node[align=center,scale=\fontscale] () at ({\pad+.5*(\leftpanelwidth)},{\pad + .96*(\leftpanelheight)}) {Compare Unit};
+% black box
+\draw[fill=black, shift={(\pad, {\pad+.69*(\leftpanelheight)})},rounded corners] (\pad,0) rectangle (\leftpanelwidth-\pad, {.24*(\leftpanelheight)});
+
+%cutouts
+\draw[cutout, shift={(5*\pad, \pad+.7*(\leftpanelheight))}] (-\cutoutleg,0) -- (0,0) -- (0,\counterstripwidth) -- (-\cutoutleg,\counterstripwidth); 
+\draw[cutout, shift={(7*\pad, \pad+.7*(\leftpanelheight))}] (\cutoutleg,0) -- (0,0) -- (0,\counterstripwidth) -- (\cutoutleg,\counterstripwidth); 
+
+\draw[cutout, shift={(5*\pad, \pad+.83*(\leftpanelheight))}] (-\cutoutleg,0) -- (0,0) -- (0,\counterstripwidth) -- (-\cutoutleg,\counterstripwidth); 
+\draw[cutout, shift={(7*\pad, \pad+.83*(\leftpanelheight))}] (\cutoutleg,0) -- (0,0) -- (0,\counterstripwidth) -- (\cutoutleg,\counterstripwidth); 
+
+% cutout text
+\node[align=right,scale=\fontscale,color=white] () at (3.7*\pad,{\pad + .74*(\leftpanelheight)}) {Reg.\ B};
+\node[align=right,scale=\fontscale,color=white] () at (3.7*\pad,{\pad + .87*(\leftpanelheight)}) {Reg.\ A};
+\node[align=left,scale=\fontscale,color=white] () at (7.7*\pad,{\pad + .74*(\leftpanelheight)}) {SS};
+\node[align=left,scale=\fontscale,color=white] () at (7.7*\pad,{\pad + .87*(\leftpanelheight)}) {SS};
+
+
+% JUMP SWITCHES
+% top row
+\newcommand{\jsrowheight}{\pad+.5*\leftpanelheight}
+
+\incutouts{\pad+\jumppad}{\jsrowheight+2*\counterstripwindowheight}{\jumpstripwidth}{\counterstripwindowheight}
+\incutouts{\pad+\jumppad+\jumpstripwidth+\jumpgap}{\jsrowheight+2*\counterstripwindowheight}{\jumpstripwidth}{\counterstripwindowheight}
+\incutouts{\pad+\jumppad+2*\jumpstripwidth+2*\jumpgap}{\jsrowheight+2*\counterstripwindowheight}{\jumpstripwidth}{\counterstripwindowheight}
+
+%bottom row
+\incutouts{\pad+\jumppad}{\jsrowheight}{\jumpstripwidth}{\counterstripwindowheight}
+\incutouts{\pad+\jumppad+\jumpstripwidth+\jumpgap}{\jsrowheight}{\jumpstripwidth}{\counterstripwindowheight}
+\incutouts{\pad+\jumppad+2*\jumpstripwidth+2*\jumpgap}{\jsrowheight}{\jumpstripwidth}{\counterstripwindowheight}
+
+%text
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + \jumpgap + 1.5*\jumpstripwidth, \jsrowheight + 4.5*\counterstripwindowheight) {JUMP SWITCHES};
+
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + .5*\jumpstripwidth, \jsrowheight + .5*\counterstripwindowheight) {A};
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + \jumpgap + 1.5*\jumpstripwidth, \jsrowheight + .5*\counterstripwindowheight) {B};
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + 2*\jumpgap + 2.5*\jumpstripwidth, \jsrowheight + .5*\counterstripwindowheight) {C};
+
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + .5*\jumpstripwidth, \jsrowheight + 2.5*\counterstripwindowheight) {SW};
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + \jumpgap + 1.5*\jumpstripwidth, \jsrowheight + 2.5*\counterstripwindowheight) {SW};
+\node[align=center,scale=\fontscale] () at (\pad+\jumppad + 2*\jumpgap + 2.5*\jumpstripwidth, \jsrowheight + 2.5*\counterstripwindowheight) {SW};
+
+% START STOP BUTTONS
+\draw[fill=shadow,shift={(\pad+\buttonpad, \pad+\buttonvpad)}] (0,0) rectangle (\buttonwidth,\buttonheight);
+\draw[fill=white,shift={(\pad+\buttonpad, \pad+\buttonvpad)}] (\shadowpad,\shadowpad) rectangle (\buttonwidth-\shadowpad,\buttonheight-\shadowpad);
+\draw[fill=shadow,shift={(\pad+\buttonpad+\buttonwidth+\buttongap, \pad+\buttonvpad)}] (0,0) rectangle (\buttonwidth,\buttonheight);
+\draw[fill=white,shift={(\pad+\buttonpad+\buttonwidth+\buttongap, \pad+\buttonvpad)}] (\shadowpad,\shadowpad) rectangle (\buttonwidth-\shadowpad,\buttonheight-\shadowpad);
+
+\node[align=center,scale=\fontscale] () at (\pad+\buttonpad+.5*\buttonwidth, \pad+\buttonvpad+.5*\buttonheight) {Start\\Stop};
+\node[align=center,scale=\fontscale] () at (\pad+\buttonpad+1.5*\buttonwidth+\buttongap, \pad+\buttonvpad+.5*\buttonheight) {Reset\\Clear};
+
+% Input A box
+\roundshadowbox{(\pad+\counterboxwidth+.5*\pad, \height-\pad-\topboxheight)}{\inputawidth}{\topboxheight}
+
+\draw[fill=white, shift={(\pad+\counterboxwidth+.5*\pad+\counterstripxpad, \height-\pad-\counterstripypad)}] (0,0) rectangle (\inputawidth-2*\counterstripxpad,-\inputaheight);
+
+% dots & numbers
+\begin{scope}[shift={(\pad+\counterboxwidth+.5*\pad+\counterstripxpad, \height-\pad-\counterstripypad-\inputaheight)}]
+\newcommand{\dotsxpad}{.4*\pad}
+\newcommand{\dotsypad}{.5*\pad}
+\newcommand{\dotsxgap}{.35*\pad}
+\newcommand{\dotsygap}{.1*\pad}
+\newcommand{\dotsrad}{.08*\pad}
+\foreach \i in {0,...,4} {
+ \draw[fill=black] (\dotsxpad + \i*\dotsxgap,3*\dotsypad+\dotsygap) circle (\dotsrad);
+ \node[align=center,scale=.35*\fontscale] () at (\dotsxpad + \i*\dotsxgap,3*\dotsypad-1.3*\dotsygap) {\i};
+}
+\foreach \i in {5,...,9} {
+ \draw[fill=black] ({\dotsxpad + (\i-5)*\dotsxgap},\dotsypad+\dotsygap) circle (\dotsrad);
+ \node[align=center,scale=.35*\fontscale] () at ({\dotsxpad + (\i-5)*\dotsxgap},\dotsypad-1.3*\dotsygap) {\i};
+}
+
+\end{scope}
+
+% Input A text
+\node[align=center,scale=\fontscale] () at (\pad+\counterboxwidth+.5*\pad+.5*\inputawidth , \height-\pad-.5*\counterstripypad) {Input A};
+
+
+% Input B box
+\roundshadowbox{(\pad+\counterboxwidth+.5*\pad + \inputawidth + .5*\pad, \height-\pad-\topboxheight)}{\inputbwidth}{\topboxheight}
+\bwbox{\pad+\counterboxwidth+.5*\pad + \inputawidth + .5*\pad + .25*\pad}{\height-\pad-\topboxheight+.5*\pad}
+
+% Input B text
+\node[align=center,scale=\fontscale] () at (\pad+\counterboxwidth+.5*\pad+ \inputawidth + .5*\pad + .5*\inputbwidth , \height-\pad-.5*\counterstripypad) {Input B};
+
+% Program storage panel
+\fill[fill=shadow, shift={(\pad+\leftpanelwidth+\pad, \pad)}]
+ (0,0) -- (\shadowpad,-\shadowpad) -- (\rightpanelwidth+\shadowpad,-\shadowpad) -- (\rightpanelwidth+\shadowpad, \rightpanelheight-\shadowpad) -- (\rightpanelwidth,\rightpanelheight);
+\draw[fill=black, shift={(\pad+\leftpanelwidth+\pad, \pad)}]
+ (0,0) rectangle (\rightpanelwidth, \rightpanelheight);
+\draw[rounded corners,fill=boxbg, shift={(\pad+\leftpanelwidth+1.5*\pad, 1.5*\pad)}]
+ (0,0) rectangle (\rightpanelwidth-\pad, \rightpanelheight-\pad);
+ % text
+\node[align=center,scale=\fontscale] () at ({0.5*(\rightpanelwidth)+2*\pad+\leftpanelwidth}, \pad+\rightpanelheight+.5*\pad) {Program Storage}; 
+
+
+
+% cute river under program storage
+\draw[fill=white,shift={(\pad+\leftpanelwidth+1.5*\pad, 1.5*\pad)}, xscale=\rightpanelwidth-\pad,yscale=\rightpanelheight-\pad]
+ (0,.15) to[out=55,in=-90,looseness=.5] (.84, .64) to[out=90,in=-90,looseness=.5] (.68, .71) to[out=90,in=-90,looseness=.5] (.82, .81) to[out=90,in=-90,looseness=.5] (.60,.90) to[out=90,in=-135,looseness=.25] (.82,1) --
+ (.68, 1) to[out=-135,in=90,looseness=.5] (.37,.87) to[out=-90,in=90,looseness=.5] (.55,.8) to[out=-90,in=90,looseness=.5] (.34,.66) to[out=-90,in=90,looseness=.5] (.5, .61) to[out=-90,in=45,looseness=.25] (0,.39);
+ 
+\draw[cutout,shift={({\leftpanelwidth+2*\pad+.33*(\rightpanelwidth)}, \pad+\rightpanelheight-.25*\pad)}] (0,0) -- ({.33*(\rightpanelwidth)},0);
+ 
+ % BUSSES
+\draw[bus] (\width+\pad,\busssheight) -- ({\pad+\leftpanelwidth+.5*\pad},\busssheight);
+\buslefttriangle{\pad+\leftpanelwidth+.5*\pad}{\busssheight}
+\draw[bus] (\width+\pad,\bussheight) -- ({\pad+\leftpanelwidth+.5*\pad},\bussheight);
+\buslefttriangle{\pad+\leftpanelwidth+.5*\pad}{\bussheight}
+
+\draw[bus] (\width+\pad,\busheight) -- ({\pad+\counterboxwidth+.5*\pad+.5*\inputawidth},\busheight) -- ({\pad+\counterboxwidth+.5*\pad+.5*\inputawidth},\buheight);
+\busdowntriangle{\pad+\counterboxwidth+.5*\pad+.5*\inputawidth}{\buheight}
+
+\draw[bus, shift={(\pad+\counterboxwidth+\pad+\inputawidth+.5*\inputbwidth,0)}] (0,\buheight) -- (0,\busheight);
+\busdowntriangle{\pad+\counterboxwidth+\pad+\inputawidth+.5*\inputbwidth}{\buheight}
+\buscirc{\pad+\counterboxwidth+\pad+\inputawidth+.5*\inputbwidth}{\busheight}
+
+\draw[bus] (\width+\pad, \rightpanelheight) --  (\width-.5*\pad, \rightpanelheight);
+\buslefttriangle{\width-.5*\pad}{\rightpanelheight}
+\end{tikzpicture}
+
+
+
+\newpage
+
+ \newgeometry{
+total={8.5in,11in},
+left=-.3in,
+% left=-.7in ,
+top=.5in
+ }
+
+
+% right panel
+\begin{tikzpicture}
+
+% outer box
+%\draw (0,0) rectangle (\width,\height);
+
+% BIG BOX AT TOP
+\roundshadowbox{(\pad, \height-\pad-\topboxheight)}{\width-2*\pad}{\topboxheight}
+
+\newcommand{\bigboxgap}{\width/3 - 2.5/3*\pad - 4/3*\inputbwidth}
+
+\bwbox{1.5*\pad}{\height-\pad-\topboxheight+.5*\pad}
+\bwbox{1.5*\pad+\inputbwidth+\bigboxgap}{\height-\pad-\topboxheight+.5*\pad}
+\bwbox{1.5*\pad+\inputbwidth+\inputbwidth+\bigboxgap+\bigboxgap}{\height-\pad-\topboxheight+.5*\pad}
+\bwbox{1.5*\pad+\inputbwidth+\inputbwidth+\inputbwidth+\bigboxgap+\bigboxgap+\bigboxgap}{\height-\pad-\topboxheight+.5*\pad}
+
+%text
+\node[align=center,scale=\fontscale] () at ({1.5*\pad + .5*(\inputbwidth)}, \height-\pad-.5*\counterstripypad) {Register A};
+\node[align=center,scale=\fontscale] () at ({1.5*\pad + 1.5*(\inputbwidth) + \bigboxgap}, \height-\pad-.5*\counterstripypad) {Register B};
+\node[align=center,scale=\fontscale] () at ({1.5*\pad + 2.5*(\inputbwidth) + \bigboxgap + \bigboxgap}, \height-\pad-.5*\counterstripypad) {Output A};
+\node[align=center,scale=\fontscale] () at ({1.5*\pad + 3.5*(\inputbwidth) + \bigboxgap + \bigboxgap + \bigboxgap)}, \height-\pad-.5*\counterstripypad) {Output B};
+
+
+% MAIN STORAGE
+\fill[fill=shadow, shift={(\pad, \pad)},rounded corners]
+ (0,0) -- (\shadowpad,-\shadowpad) -- (\mainpanelwidth+\shadowpad,-\shadowpad) -- (\mainpanelwidth+\shadowpad, \rightpanelheight-\shadowpad) -- (\mainpanelwidth,\rightpanelheight);
+\draw[fill=black, shift={(\pad, \pad)},rounded corners]
+ (0,0) rectangle (\mainpanelwidth, \rightpanelheight);
+\draw[rounded corners,fill=boxbg, shift={(1.5*\pad, 1.5*\pad)}]
+ (0,0) rectangle (\mainpanelwidth-\pad, \rightpanelheight-\pad);
+ % text
+\node[align=center,scale=\fontscale] () at ({0.5*(\mainpanelwidth)+\pad}, \pad+\rightpanelheight+.5*\pad) {Main Storage}; 
+
+\draw[cutout,shift={({\pad +.4*(\mainpanelwidth)}, \pad+\rightpanelheight-.25*\pad)}] (0,0) -- ({.2*(\mainpanelwidth)},0);
+
+% main storage river
+\draw[fill=white,shift={(1.5*\pad, 1.5*\pad)}, xscale=\mainpanelwidth-\pad,yscale=\rightpanelheight-\pad]
+ (0,.18) to[out=45,in=-90,looseness=.5] (.77, .75) to[out=90,in=-90,looseness=1] (.63,.88) to[out=90,in=-130,looseness=.5] (.75,1) -- (.69,1) to[out=-135,in=90,looseness=.5] (.54,.85) to[out=-90,in=90,looseness=1] (.61,.80) to[out=-90,in=45,looseness=.5] (0,.37);
+
+% Right panel bus lines
+
+% top row
+\draw[bus] (-\pad,\busheight) -- (1.5*\pad+.5*\inputbwidth,\busheight) -- (1.5*\pad+.5*\inputbwidth, \buheight);
+\draw[bus] (1.5*\pad+.5*\inputbwidth,\busheight) -- (1.5*\pad + 1.5*\inputbwidth + \bigboxgap,\busheight) -- (1.5*\pad + 1.5*\inputbwidth + \bigboxgap,\buheight);
+\draw[bus] (1.5*\pad+.5*\inputbwidth,\busheight) -- (1.5*\pad+.5*\inputbwidth,\busssheight-\busgap);
+ 
+\buscirc{1.5*\pad+.5*\inputbwidth}{\busheight}
+\busdowntriangle{1.5*\pad+.5*\inputbwidth}{\buheight}
+\busdowntriangle{1.5*\pad+.5*\inputbwidth}{\busssheight-\busgap}
+\busdowntriangle{1.5*\pad + 1.5*\inputbwidth + \bigboxgap}{\buheight}
+\node[align=center,scale=\fontscale] () at (1.5*\pad+.5*\inputbwidth-.5*\pad,\busssheight-\busgap) {In};
+
+% middle row
+\draw[bus] (-\pad,\bussheight) -- (1.5*\pad+.5*\inputbwidth+\busgap,\bussheight) -- (1.5*\pad+.5*\inputbwidth+\busgap, \buheight);
+\buscirc{1.5*\pad+.5*\inputbwidth+\busgap}{\bussheight}
+\busdowntriangle{1.5*\pad+.5*\inputbwidth+\busgap}{\buheight}
+
+\draw[bus] (1.5*\pad+.5*\inputbwidth+\busgap,\bussheight) -- (1.5*\pad + 1.5*\inputbwidth + \bigboxgap + \busgap, \bussheight) -- (1.5*\pad + 1.5*\inputbwidth + \bigboxgap + \busgap, \buheight);
+\busdowntriangle{1.5*\pad + 1.5*\inputbwidth + \bigboxgap + \busgap}{\buheight}
+
+% bottom row
+\draw[bus] (-\pad,\busssheight) -- (\width-1.5*\pad-.5*\inputbwidth,\busssheight);
+\draw[bus, shift={(1.5*\pad+.5*\inputbwidth+2*\busgap,0)}] (0,\busssheight) -- (0,\buheight);
+
+\busuptriangle{1.5*\pad+.5*\inputbwidth+2*\busgap}{\buheight}
+\buscirc{1.5*\pad + .5*\inputbwidth + 2*\busgap}{\busssheight}
+
+\draw[bus, shift={(1.5*\pad + 1.5*\inputbwidth + \bigboxgap + 2*\busgap,0)}] (0,\busssheight) -- (0,\buheight);
+\busuptriangle{1.5*\pad + 1.5*\inputbwidth + \bigboxgap + 2*\busgap}{\buheight}
+\buscirc{1.5*\pad + 1.5*\inputbwidth + \bigboxgap + 2*\busgap}{\busssheight}
+
+\draw[bus, shift={(1.5*\pad + 2.5*\inputbwidth + \bigboxgap,0)}] (0,\busssheight) -- (0,\buheight);
+\busuptriangle{1.5*\pad + 2.5*\inputbwidth + \bigboxgap}{\buheight}
+\buscirc{1.5*\pad + 2.5*\inputbwidth + \bigboxgap}{\busssheight}
+
+\draw[bus, shift={(\width-1.5*\pad-.5*\inputbwidth,0)}] (0,\busssheight-\busgap) -- (0,\buheight);
+\busuptriangle{\width-1.5*\pad-.5*\inputbwidth}{\buheight}
+\buscirc{\width-1.5*\pad-.5*\inputbwidth}{\busssheight}
+
+\busuptriangle{\width-1.5*\pad-.5*\inputbwidth}{\busssheight-\busgap}
+\node[align=left,scale=\fontscale] () at (\width-1.5*\pad-.5*\inputbwidth + 1*\pad,\busssheight-\busgap) {Out};
+
+% in da middle
+\draw[bus] (-\pad, \rightpanelheight) --  (.5*\pad, \rightpanelheight);
+\busrighttriangle{.5*\pad}{\rightpanelheight}
+
+% credit at the bottom
+\node[align=right,anchor=east,scale=.5*\fontscale] () at (\width-\pad,.5*\pad) {original design by Fred Matt, this reproduction by Chris Staecker};
+
+\end{tikzpicture}
+
+\newpage
+
+ \newgeometry{
+ letterpaper,
+total={8in,10in},
+left=0in
+% left=-.7in ,
+% top=-.1in
+ }
+
+% 2 coords are lower-left corner
+\newcommand{\jumpstrip}[2]{
+\begin{scope}[shift={(#1,#2)}]
+\draw[rounded corners] (\stripdelta,0) rectangle (\jumpstripwidth, \jumpstriplength);
+\node[scale=\fontscale,align=center] () at ({.5*(\jumpstripwidth)+.5*\stripdelta}, {.6*(\jumpstriplength)}) {0};
+\node[scale=\fontscale,align=center] () at ({.5*(\jumpstripwidth)+.5*\stripdelta}, {.4*(\jumpstriplength)}) {1};
+\foreach \h in {.3,.5,.7} {
+  \draw[shift={(\stripdelta, {\h*(\jumpstriplength)})}] (0,0) -- (\jumpstripwidth-\stripdelta,0);
+}
+\end{scope}
+}
+
+%\newcommand{\cspad}{\counterstriplength
+
+\newcommand{\counterstrip}[2]{
+\begin{scope}[shift={(#1,#2)}]
+\draw[rounded corners] (\stripdelta,0) rectangle (\counterstripwidth, \counterstriplength);
+\foreach \i in {0,...,9} {
+  \node[scale=\fontscale,align=center] () at ({.5*(\counterstripwidth)+.5*\stripdelta}, {(9+2.5-\i)*(\counterstripwindowheight)}) {\i};
+  \draw[shift={(\stripdelta, {(2+\i)*(\counterstripwindowheight)})}] (0,0) -- (\counterstripwidth-\stripdelta,0);
+  \draw[shift={(\stripdelta, {(3+\i)*(\counterstripwindowheight)})}] (0,0) -- (\counterstripwidth-\stripdelta,0);  
+}
+\end{scope}
+}
+
+\newcommand{\comparestrip}[2]{
+\begin{scope}[shift={(#1,#2)}]
+\draw[rounded corners] (0,\stripdelta) rectangle (\comparestriplength, \counterstripwidth);
+\node[scale=\fontscale,align=center] () at (.5*\comparestriplength, .5*\counterstripwidth + .5*\stripdelta) {$<$};
+\node[scale=\fontscale,align=center] () at (.5*\comparestriplength + 2*\pad, .5*\counterstripwidth + .5*\stripdelta) {$=$};
+\node[scale=\fontscale,align=center] () at (.5*\comparestriplength+ 4*\pad, .5*\counterstripwidth + .5*\stripdelta) {$>$};
+\end{scope}
+}
+
+
+\[ \begin{tikzpicture}
+\jumpstrip{0}{0}
+\jumpstrip{2*\jumpstripwidth}{0}
+\jumpstrip{4*\jumpstripwidth}{0}
+
+\counterstrip{6*\jumpstripwidth}{0}
+\counterstrip{8*\jumpstripwidth}{0}
+\counterstrip{10*\jumpstripwidth}{0}
+\counterstrip{12*\jumpstripwidth}{0}
+
+\comparestrip{0}{-1.5*\counterstripwidth}
+\comparestrip{0}{-3*\counterstripwidth}
+\end{tikzpicture} \]
+
+\newpage
+
+\newcommand{\inputstrip}[2]{
+\begin{scope}[shift={(#1,#2)}]
+\draw[rounded corners] (0,\stripdelta) rectangle (\inputstripwidth,.9*\height);
+\end{scope}
+}
+
+\[
+\begin{tikzpicture}
+\foreach \i in {0,...,4} {
+ \inputstrip{\i*\inputstripwidth + \i*.5*\pad}{0}
+}
+\end{tikzpicture}
+\]
+
+\newpage
+
+
+\newcommand{\programstrip}[2]{
+\begin{scope}[shift={(#1,#2)},rotate=90,transform shape]
+\draw[rounded corners] (0,0) rectangle (\rightpanelwidth,\rightpanelheight);
+\node[scale=.5*\fontscale] () at ({.5*(\rightpanelwidth)},\rightpanelheight-.5*\pad) {Program};
+\end{scope}
+}
+\[
+\begin{tikzpicture}
+\programstrip{0}{0}
+\programstrip{0}{\rightpanelwidth+\pad}
+\end{tikzpicture}
+\]
+
+
+\[
+\begin{tikzpicture}
+\draw[] (0,0) rectangle (\mainpanelwidth,\mainpanelheight);
+\foreach \i in {0,...,4} {
+ \draw (0,{\i/5*(\mainpanelheight)}) rectangle ({.5*(\mainpanelwidth)},{(\i+1)/5*(\mainpanelheight)}) rectangle (\mainpanelwidth,{\i/5*(\mainpanelheight)});
+ \node[scale=\fontscale] () at ({.25*(\mainpanelwidth)}, {(4-\i+.9)/5*(\mainpanelheight)}) {9\i};
+}
+\foreach \i in {5,...,9} {
+ \node[scale=\fontscale] () at ({.75*(\mainpanelwidth)}, {(9-\i+.9)/5*(\mainpanelheight)}) {9\i};
+}
+%\node[scale=.5*\fontscale] () at (.5*\leftpanelwidth,\leftpanelheight-.5*\pad) {Program};
+\end{tikzpicture}
+\]
+
+\end{document}
